@@ -148,7 +148,7 @@ resource "aws_security_group" "myPrivateSG" {
   }
 
   tags = {
-    Name = "allow_tls"
+    Name = "privateSG"
   }
 }
 
@@ -164,7 +164,7 @@ resource "aws_security_group" "myPublicSG" {
     from_port        = 80
     to_port          = 80
     protocol         = "tcp"
-    cidr_blocks      = [aws_vpc.myVPC.cidr_block]
+    cidr_blocks      = ["0.0.0.0/0"]
 
   }
     ingress {
@@ -172,7 +172,7 @@ resource "aws_security_group" "myPublicSG" {
     from_port        = 22
     to_port          = 22
     protocol         = "tcp"
-    cidr_blocks      = [aws_vpc.myVPC.cidr_block]
+    cidr_blocks      = ["0.0.0.0/0"]
 
   }
 
@@ -185,32 +185,110 @@ resource "aws_security_group" "myPublicSG" {
   }
 
   tags = {
-    Name = "allow_tls"
+    Name = "publicSG"
   }
 }
-resource "aws_network_interface" "test" {
+resource "aws_network_interface" "public" {
   subnet_id       = aws_subnet.myPublicSubnet.id
   security_groups = [aws_security_group.myPublicSG.id]
 
 }
+resource "aws_network_interface" "private" {
+  subnet_id       = aws_subnet.myPrivateSubnet.id
+  security_groups = [aws_security_group.myPrivateSG.id]
 
+}
 
 #public EC2
 
 resource "aws_instance" "web" {
     ami           = "ami-0015a39e4b7c0966f"
     instance_type = "t2.micro"
+    key_name = "london1"
 
     network_interface {
       device_index = 0
-      network_interface_id = aws_network_interface.test.id
+      network_interface_id = aws_network_interface.public.id
     }
 
     tags = {
-        Name = "HelloWorld"
+        Name = "publicInstance"
     }
+
 }
 
 
 
 #Private EC2
+
+resource "aws_instance" "private" {
+    ami           = "ami-0015a39e4b7c0966f"
+    instance_type = "t2.micro"
+    key_name = "london1"
+
+    network_interface {
+      device_index = 0
+      network_interface_id = aws_network_interface.private.id
+    }
+
+    tags = {
+        Name = "PrivateInstance"
+    }
+    user_data = <<-EOF
+                    #!/bin/bash
+                    sudo apt update -y
+                    sudo apt install nginx -y
+                    sudo systemctl restart nginx
+                    sudo bash -c 'echo Coucou je m'appelle theo' > /var/www/html/index.html
+                    EOF
+}
+
+
+#target group
+resource "aws_lb_target_group" "test" {
+  name     = "PrivateTargetInstance"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id = aws_vpc.myVPC.id
+  target_type = "instance"
+  health_check {
+    interval = 30
+    matcher = "200,202"
+    port = 80
+    protocol = "HTTP"
+    timeout = 5
+    unhealthy_threshold = 3
+  }
+}
+#Attach target to lb
+resource "aws_alb_target_group_attachment" "test" {
+  target_group_arn = aws_lb_target_group.test.arn
+  target_id        = aws_instance.private.id
+  port             = 80
+}
+
+#LoadBalancer
+resource "aws_lb" "test" {
+  name               = "PrivateLB"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.myPublicSG.id]
+  subnets            = [aws_subnet.myPublicSubnet.id, aws_subnet.myPrivateSubnet.id]
+
+  enable_deletion_protection = false
+
+  tags = {
+    Environment = "production"
+  }
+}
+
+#listenerLB
+resource "aws_lb_listener" "example" {
+  load_balancer_arn = aws_lb.test.arn
+  port = 80
+
+  default_action {
+    target_group_arn = aws_lb_target_group.test.arn
+    type             = "forward"
+  }
+}
