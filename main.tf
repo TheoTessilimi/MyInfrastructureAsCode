@@ -198,6 +198,11 @@ resource "aws_network_interface" "private" {
   security_groups = [aws_security_group.myPrivateSG.id]
 
 }
+resource "aws_network_interface" "ansible" {
+  subnet_id       = aws_subnet.myPrivateSubnet.id
+  security_groups = [aws_security_group.myPrivateSG.id]
+
+}
 
 #public EC2
 
@@ -217,6 +222,28 @@ resource "aws_instance" "web" {
 
 }
 
+#Private EC2 for Ansible
+resource "aws_instance" "AnsibleControlPlane" {
+    ami           = "ami-0015a39e4b7c0966f"
+    instance_type = "t2.micro"
+    key_name = "london1"
+
+    network_interface {
+      device_index = 0
+      network_interface_id = aws_network_interface.ansible.id
+    }
+
+    tags = {
+        Name = "AnsibleControlPlane"
+    }
+    user_data = <<-EOF
+                    #!/bin/bash
+                    sudo apt update -y
+                    sudo apt install software-properties-common -y
+                    sudo add-apt-repository --yes --update ppa:ansible/ansible-2.9 -y
+                    sudo apt install ansible=2.9.6+dfsg-1 -y        
+                    EOF
+}
 
 
 #Private EC2
