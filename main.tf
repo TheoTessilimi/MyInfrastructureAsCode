@@ -212,7 +212,7 @@ resource "aws_instance" "web" {
     }
 
     tags = {
-        Name = "publicInstance"
+        Name = "myPublicInstance"
     }
 
 }
@@ -232,7 +232,7 @@ resource "aws_instance" "private" {
     }
 
     tags = {
-        Name = "PrivateInstance"
+        Name = "myPrivateInstance_1"
     }
     user_data = <<-EOF
                     #!/bin/bash
