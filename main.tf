@@ -6,6 +6,12 @@ terraform {
     }
   }
 }
+#local variables
+locals {
+  ssh_user = "ubuntu"
+  key_name = "london1"
+  private_key_path = "C:/Users/tessi/.ssh/london1.pem"
+}
 
 # Configure the AWS Provider
 provider "aws" {
@@ -236,6 +242,10 @@ resource "aws_instance" "AnsibleControlPlane" {
     tags = {
         Name = "AnsibleControlPlane"
     }
+    provisioner "file" {
+      source = "./ansible"
+      destination = "/home/ubuntu"
+    }
     user_data = <<-EOF
                     #!/bin/bash
                     sudo apt update -y
@@ -261,13 +271,7 @@ resource "aws_instance" "private" {
     tags = {
         Name = "myPrivateInstance_1"
     }
-    user_data = <<-EOF
-                    #!/bin/bash
-                    sudo apt update -y
-                    sudo apt install nginx -y
-                    sudo systemctl restart nginx
-                    sudo bash -c 'echo Coucou je m'appelle theo' > /var/www/html/index.html
-                    EOF
+
 }
 
 
