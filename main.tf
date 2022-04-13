@@ -1,32 +1,32 @@
 terraform {
-    required_providers {
-        aws = {
-            source  = "hashicorp/aws"
-            version = "~> 3.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0"
     }
   }
 }
 #local variables
 locals {
-  ssh_user = "ubuntu"
-  key_name = "london1"
+  ssh_user         = "ubuntu"
+  key_name         = "london1"
   private_key_path = "C:/Users/tessi/.ssh/london1.pem"
 }
 
 # Configure the AWS Provider
 provider "aws" {
-    region = "eu-west-2"
-    access_key = var.access_key
-    secret_key = var.secret_key
+  region     = "eu-west-2"
+  access_key = var.access_key
+  secret_key = var.secret_key
 
 }
 
 # Create a VPC
 resource "aws_vpc" "myVPC" {
-    cidr_block = "192.168.0.0/16"
+  cidr_block = "192.168.0.0/16"
 
-    tags = {
-        Name = "myVPC"
+  tags = {
+    Name = "myVPC"
   }
 }
 #Internet gateway
@@ -41,9 +41,9 @@ resource "aws_internet_gateway" "gw" {
 #Create public subnet
 
 resource "aws_subnet" "myPublicSubnet" {
-  vpc_id     = aws_vpc.myVPC.id
-  cidr_block = "192.168.0.0/20"
-  availability_zone = "eu-west-2a"
+  vpc_id                  = aws_vpc.myVPC.id
+  cidr_block              = "192.168.0.0/20"
+  availability_zone       = "eu-west-2a"
   map_public_ip_on_launch = true
 
   tags = {
@@ -54,8 +54,8 @@ resource "aws_subnet" "myPublicSubnet" {
 #Create private subnet
 
 resource "aws_subnet" "myPrivateSubnet" {
-  vpc_id     = aws_vpc.myVPC.id
-  cidr_block = "192.168.16.0/20"
+  vpc_id            = aws_vpc.myVPC.id
+  cidr_block        = "192.168.16.0/20"
   availability_zone = "eu-west-2b"
 
   tags = {
@@ -64,21 +64,21 @@ resource "aws_subnet" "myPrivateSubnet" {
 }
 #elasticIP
 resource "aws_eip" "one" {
-    vpc = true
- 
+  vpc = true
+
 }
 
 #Nat Gateway
 resource "aws_nat_gateway" "natPrivate" {
-    allocation_id = aws_eip.one.id
-    subnet_id     = aws_subnet.myPublicSubnet.id
+  allocation_id = aws_eip.one.id
+  subnet_id     = aws_subnet.myPublicSubnet.id
 
-    tags = {
-        Name = "gw NAT"
-    }
-    depends_on = [
-      aws_internet_gateway.gw
-    ]
+  tags = {
+    Name = "gw NAT"
+  }
+  depends_on = [
+    aws_internet_gateway.gw
+  ]
 }
 
 #public routing table
@@ -105,7 +105,7 @@ resource "aws_route_table" "privateRoutingTable" {
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_nat_gateway.natPrivate.id
-    
+
   }
 
 
@@ -129,19 +129,19 @@ resource "aws_security_group" "myPrivateSG" {
   vpc_id      = aws_vpc.myVPC.id
 
   ingress {
-    description      = "HTTP"
-    from_port        = 80
-    to_port          = 80
-    protocol         = "tcp"
-    cidr_blocks      = [aws_vpc.myVPC.cidr_block]
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.myVPC.cidr_block]
 
   }
-    ingress {
-    description      = "SSH"
-    from_port        = 22
-    to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = [aws_vpc.myVPC.cidr_block]
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.myVPC.cidr_block]
 
   }
 
@@ -166,19 +166,19 @@ resource "aws_security_group" "myPublicSG" {
   vpc_id      = aws_vpc.myVPC.id
 
   ingress {
-    description      = "HTTP"
-    from_port        = 80
-    to_port          = 80
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
 
   }
-    ingress {
-    description      = "SSH"
-    from_port        = 22
-    to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
 
   }
 
@@ -213,40 +213,76 @@ resource "aws_network_interface" "ansible" {
 #public EC2
 
 resource "aws_instance" "web" {
-    ami           = "ami-0015a39e4b7c0966f"
-    instance_type = "t2.micro"
-    key_name = "london1"
+  ami           = "ami-0015a39e4b7c0966f"
+  instance_type = "t2.micro"
+  key_name      = "london1"
 
-    network_interface {
-      device_index = 0
-      network_interface_id = aws_network_interface.public.id
+  network_interface {
+    device_index         = 0
+    network_interface_id = aws_network_interface.public.id
+  }
+
+  tags = {
+    Name = "myPublicInstance"
+  }
+  provisioner "file" {
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      host        = self.public_ip
+      private_key = file("key/london1.pem")
     }
+    source      = "./key/london1.pem"
+    destination = "/home/ubuntu/london1.pem"
 
-    tags = {
-        Name = "myPublicInstance"
-    }
-
+  }
 }
+
 
 #Private EC2 for Ansible
 resource "aws_instance" "AnsibleControlPlane" {
-    ami           = "ami-0015a39e4b7c0966f"
-    instance_type = "t2.micro"
-    key_name = "london1"
+  ami           = "ami-0015a39e4b7c0966f"
+  instance_type = "t2.micro"
+  key_name      = "london1"
 
-    network_interface {
-      device_index = 0
-      network_interface_id = aws_network_interface.ansible.id
-    }
+  network_interface {
+    device_index         = 0
+    network_interface_id = aws_network_interface.ansible.id
+  }
 
-    tags = {
-        Name = "AnsibleControlPlane"
+  tags = {
+    Name = "AnsibleControlPlane"
+  }
+
+  provisioner "file" {
+    connection {
+      type                = "ssh"
+      user                = "ubuntu"
+      host                = self.private_ip
+      private_key         = file("key/london1.pem")
+      bastion_user        = "ubuntu"
+      bastion_host        = aws_instance.web.public_ip
+      bastion_private_key = file("key/london1.pem")
     }
-    provisioner "file" {
-      source = "./ansible"
-      destination = "/home/ubuntu"
+    source      = "./ansible"
+    destination = "/home/ubuntu/ansible"
+  }
+  provisioner "file" {
+    connection {
+      type                = "ssh"
+      user                = "ubuntu"
+      host                = self.private_ip
+      private_key         = file("key/london1.pem")
+      bastion_user        = "ubuntu"
+      bastion_host        = aws_instance.web.public_ip
+      bastion_private_key = file("key/london1.pem")
     }
-    user_data = <<-EOF
+    source      = "./key/london1.pem"
+    destination = "/home/ubuntu/london1.pem"
+
+  }
+
+  user_data = <<-EOF
                     #!/bin/bash
                     sudo apt update -y
                     sudo apt install software-properties-common -y
@@ -259,35 +295,35 @@ resource "aws_instance" "AnsibleControlPlane" {
 #Private EC2
 
 resource "aws_instance" "private" {
-    ami           = "ami-0015a39e4b7c0966f"
-    instance_type = "t2.micro"
-    key_name = "london1"
+  ami           = "ami-0015a39e4b7c0966f"
+  instance_type = "t2.micro"
+  key_name      = "london1"
 
-    network_interface {
-      device_index = 0
-      network_interface_id = aws_network_interface.private.id
-    }
+  network_interface {
+    device_index         = 0
+    network_interface_id = aws_network_interface.private.id
+  }
 
-    tags = {
-        Name = "myPrivateInstance_1"
-    }
+  tags = {
+    Name = "myPrivateInstance_1"
+  }
 
 }
 
 
 #target group
 resource "aws_lb_target_group" "test" {
-  name     = "PrivateTargetInstance"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id = aws_vpc.myVPC.id
+  name        = "PrivateTargetInstance"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.myVPC.id
   target_type = "instance"
   health_check {
-    interval = 30
-    matcher = "200,202"
-    port = 80
-    protocol = "HTTP"
-    timeout = 5
+    interval            = 30
+    matcher             = "200,202"
+    port                = 80
+    protocol            = "HTTP"
+    timeout             = 5
     unhealthy_threshold = 3
   }
 }
@@ -316,7 +352,7 @@ resource "aws_lb" "test" {
 #listenerLB
 resource "aws_lb_listener" "example" {
   load_balancer_arn = aws_lb.test.arn
-  port = 80
+  port              = 80
 
   default_action {
     target_group_arn = aws_lb_target_group.test.arn
