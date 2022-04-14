@@ -1,7 +1,7 @@
 - name: Install Nginx
   hosts: all
   remote_user: ubuntu
-  become: yes
+  become: true
 
   roles:
   - nginx

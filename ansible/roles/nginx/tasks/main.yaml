@@ -1,9 +1,24 @@
 ---
+- name: Update and upgrade apt packages
+  become: true
+  apt:
+    upgrade: yes
+    update_cache: yes
 - name: Ensure Nginx is at the latest version
   apt:
     name: nginx
     state: latest
 - name: Make sure Nginx is running
   systemd:
-    state: started
     name: nginx
+    state: started
+
+- name: remove existing file
+  file:
+    state: absent
+    path: /var/www/html/index.nginx-debian.html
+
+- name: Copy site on server
+  copy:
+    src: "../../../ansible/website/index.html"
+    dest: "/var/www/html/index.html"
