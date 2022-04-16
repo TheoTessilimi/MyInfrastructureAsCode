@@ -19,7 +19,7 @@
    - name : myPrivateSubnet
 
 4. **Une instance EC2 public**
-   - port ouvert : 80 et 22
+   - port ouvert : 22
    - name : myPublicInstance
 
 5. **Une instance EC2 privé**
@@ -28,7 +28,7 @@
    - Connecté à : LoadBalancer[0] et NAT
 
 6. **Une instance EC2 privé**
-   - port ouvert : 80 et 22
+   - port ouvert : 22
    - name : AnsibleControlPlane
    - Connecté à : NAT
   
