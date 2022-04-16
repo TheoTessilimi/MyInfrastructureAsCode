@@ -9,7 +9,7 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
-  region     = "eu-west-2"
+  region     = var.region
   access_key = var.access_key
   secret_key = var.secret_key
 
@@ -17,10 +17,10 @@ provider "aws" {
 
 # Create a VPC
 resource "aws_vpc" "myVPC" {
-  cidr_block = "192.168.0.0/16"
+  cidr_block = var.vpc_cidr
 
   tags = {
-    Name = "myVPC"
+    Name = var.vpc_name
   }
 }
 #Internet gateway
@@ -36,12 +36,12 @@ resource "aws_internet_gateway" "gw" {
 
 resource "aws_subnet" "myPublicSubnet" {
   vpc_id                  = aws_vpc.myVPC.id
-  cidr_block              = "192.168.0.0/20"
-  availability_zone       = "eu-west-2a"
+  cidr_block              = var.public_subnet_cidr
+  availability_zone       = var.public_subnet_availability_zone
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "myPublicSubnet"
+    Name = var.public_subnet_name
   }
 }
 
@@ -49,11 +49,11 @@ resource "aws_subnet" "myPublicSubnet" {
 
 resource "aws_subnet" "myPrivateSubnet" {
   vpc_id            = aws_vpc.myVPC.id
-  cidr_block        = "192.168.16.0/20"
-  availability_zone = "eu-west-2b"
+  cidr_block        = var.private_subnet_cidr
+  availability_zone = var.private_subnet_availability_zone
 
   tags = {
-    Name = "myPrivateSubnet"
+    Name = var.private_subnet_name
   }
 }
 #elasticIP

@@ -20,9 +20,9 @@ resource "aws_network_interface" "ansible" {
 
 #public EC2
 resource "aws_instance" "web" {
-  ami           = "ami-0015a39e4b7c0966f"
-  instance_type = "t2.micro"
-  key_name      = "london1"
+  ami           = var.public_instance_ami
+  instance_type = var.public_instance_type
+  key_name      = var.key_name
 
   network_interface {
     device_index         = 0
@@ -30,17 +30,17 @@ resource "aws_instance" "web" {
   }
 
   tags = {
-    Name = "myPublicInstance"
+    Name = var.public_instance_name
   }
   provisioner "file" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
       host        = self.public_ip
-      private_key = file("../key/london1.pem")
+      private_key = file(var.key_path)
     }
-    source      = "../key/london1.pem"
-    destination = "/home/ubuntu/london1.pem"
+    source      = var.key_path
+    destination = "/home/ubuntu/${var.key_name}.pem"
 
   }
 }
@@ -48,9 +48,9 @@ resource "aws_instance" "web" {
 
 #Private EC2 for Ansible
 resource "aws_instance" "AnsibleControlPlane" {
-  ami           = "ami-0015a39e4b7c0966f"
-  instance_type = "t2.micro"
-  key_name      = "london1"
+  ami           = var.ansible_instance_ami
+  instance_type = var.ansible_instance_type
+  key_name      = var.key_name
 
   network_interface {
     device_index         = 0
@@ -58,7 +58,7 @@ resource "aws_instance" "AnsibleControlPlane" {
   }
 
   tags = {
-    Name = "AnsibleControlPlane"
+    Name = var.ansible_instance_name
   }
 
   provisioner "file" {
@@ -66,10 +66,10 @@ resource "aws_instance" "AnsibleControlPlane" {
       type                = "ssh"
       user                = "ubuntu"
       host                = self.private_ip
-      private_key         = file("../key/london1.pem")
+      private_key         = file(var.key_path)
       bastion_user        = "ubuntu"
       bastion_host        = aws_instance.web.public_ip
-      bastion_private_key = file("../key/london1.pem")
+      bastion_private_key = file(var.key_path)
     }
     source      = "../ansible"
     destination = "/home/ubuntu/ansible"
@@ -79,13 +79,13 @@ resource "aws_instance" "AnsibleControlPlane" {
       type                = "ssh"
       user                = "ubuntu"
       host                = self.private_ip
-      private_key         = file("../key/london1.pem")
+      private_key         = file(var.key_path)
       bastion_user        = "ubuntu"
       bastion_host        = aws_instance.web.public_ip
-      bastion_private_key = file("../key/london1.pem")
+      bastion_private_key = file(var.key_path)
     }
-    source      = "../key/london1.pem"
-    destination = "/home/ubuntu/london1.pem"
+    source      = var.key_path
+    destination = "/home/ubuntu/${var.key_name}.pem"
   }
   depends_on = [
     aws_instance.private,
@@ -104,9 +104,9 @@ resource "aws_instance" "AnsibleControlPlane" {
 #Private EC2
 
 resource "aws_instance" "private" {
-  ami           = "ami-0015a39e4b7c0966f"
-  instance_type = "t2.micro"
-  key_name      = "london1"
+  ami           = var.website_instance_ami
+  instance_type = var.ansible_instance_type
+  key_name      = var.key_name
 
   network_interface {
     device_index         = 0
@@ -114,7 +114,7 @@ resource "aws_instance" "private" {
   }
 
   tags = {
-    Name = "myPrivateInstance_1"
+    Name = var.website_instance_name
   }
 
 }
