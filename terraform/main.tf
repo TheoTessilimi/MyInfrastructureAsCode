@@ -116,24 +116,17 @@ resource "aws_route_table_association" "b" {
   route_table_id = aws_route_table.privateRoutingTable.id
 }
 
-#private security group
-resource "aws_security_group" "myPrivateSG" {
-  name        = "privateSG"
-  description = "Allow TLS inbound traffic"
+
+#private allow HTTP security group
+resource "aws_security_group" "myPrivateSGHTTP" {
+  name        = "privateSGHTTP"
+  description = "Allow HTTP inbound traffic"
   vpc_id      = aws_vpc.myVPC.id
 
   ingress {
     description = "HTTP"
     from_port   = 80
     to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.myVPC.cidr_block]
-
-  }
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [aws_vpc.myVPC.cidr_block]
 
@@ -148,29 +141,77 @@ resource "aws_security_group" "myPrivateSG" {
   }
 
   tags = {
-    Name = "privateSG"
+    Name = "privateSG Allow HTTP"
+  }
+}
+
+#private allow SSH security group
+resource "aws_security_group" "myPrivateSGSSH" {
+  name        = "privateSGSSH"
+  description = "Allow SSH inbound traffic"
+  vpc_id      = aws_vpc.myVPC.id
+
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.myVPC.cidr_block]
+
+  }
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = {
+    Name = "privateSG Allow SSH"
+  }
+}
+
+#public allow SSH security group 
+
+resource "aws_security_group" "myPublicSGSSH" {
+  name        = "publicSGSSH"
+  description = "Allow SSH inbound traffic"
+  vpc_id      = aws_vpc.myVPC.id
+
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = {
+    Name = "publicSG Allow SSH"
   }
 }
 
 #public security group 
 
-resource "aws_security_group" "myPublicSG" {
-  name        = "publicSG"
-  description = "Allow TLS inbound traffic"
+resource "aws_security_group" "myPublicSGHTTP" {
+  name        = "publicSGHTTP"
+  description = "Allow HTTP inbound traffic"
   vpc_id      = aws_vpc.myVPC.id
 
   ingress {
     description = "HTTP"
     from_port   = 80
     to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-
-  }
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
 
@@ -185,9 +226,10 @@ resource "aws_security_group" "myPublicSG" {
   }
 
   tags = {
-    Name = "publicSG"
+    Name = "publicSG Allow HTTP"
   }
 }
+
 
 
 

@@ -26,7 +26,7 @@ resource "aws_lb" "test" {
   name               = "PrivateLB"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.myPublicSG.id]
+  security_groups    = [aws_security_group.myPublicSGSSH.id, aws_security_group.myPublicSGHTTP.id]
   subnets            = [aws_subnet.myPublicSubnet.id, aws_subnet.myPrivateSubnet.id]
 
   enable_deletion_protection = false

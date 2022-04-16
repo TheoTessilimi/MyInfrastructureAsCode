@@ -1,17 +1,17 @@
 #Network Interface
 resource "aws_network_interface" "public" {
   subnet_id       = aws_subnet.myPublicSubnet.id
-  security_groups = [aws_security_group.myPublicSG.id]
+  security_groups = [aws_security_group.myPublicSGSSH.id]
 
 }
 resource "aws_network_interface" "private" {
   subnet_id       = aws_subnet.myPrivateSubnet.id
-  security_groups = [aws_security_group.myPrivateSG.id]
+  security_groups = [aws_security_group.myPrivateSGHTTP.id, aws_security_group.myPrivateSGSSH.id]
 
 }
 resource "aws_network_interface" "ansible" {
   subnet_id       = aws_subnet.myPrivateSubnet.id
-  security_groups = [aws_security_group.myPrivateSG.id]
+  security_groups = [aws_security_group.myPrivateSGSSH.id]
 
 }
 
