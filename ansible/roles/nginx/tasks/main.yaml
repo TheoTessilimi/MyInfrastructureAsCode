@@ -4,6 +4,7 @@
   apt:
     upgrade: yes
     update_cache: yes
+
 - name: Ensure Nginx is at the latest version
   apt:
     name: nginx
@@ -16,9 +17,31 @@
 - name: remove existing file
   file:
     state: absent
-    path: /var/www/html/index.nginx-debian.html
+    path: '{{ item }}'
+  with_items:
+    - /var/www/html/index.nginx-debian.html
+    - /etc/nginx/sites-available/default
+    - /etc/nginx/sites-enabled/default
 
-- name: Copy site on server
+- name: add nginx conf for symfony
   copy:
-    src: "../../../ansible/website/index.html"
-    dest: "/var/www/html/index.html"
+    src: default.conf
+    dest: '{{ item }}'
+  with_items: 
+    - /etc/nginx/sites-enabled/symfony.conf
+    - /etc/nginx/sites-available/symfony.conf
+
+- name: Add perm for nginx
+  file: 
+    dest: /var/www/ 
+    owner: www-data 
+    group: www-data 
+    mode: u=rwX,g=rX,o=rX 
+    recurse: yes
+
+- name: reload Nginx
+  service: 
+    name: nginx 
+    state: restarted
+
+

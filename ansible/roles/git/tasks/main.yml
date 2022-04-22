@@ -1,0 +1,18 @@
+---
+- name: remove previous files
+  file:
+    state: absent
+    path: "/var/www/"
+
+- name: Clone Git repo
+  git: 
+    repo: 'https://github.com/TheoTessilimi/SteamLinks.git'
+    dest: "/var/www/"
+
+- name: Perm to this repo
+  file: 
+    dest: /var/www/ 
+    owner: ubuntu 
+    group: ubuntu
+    mode: u=rwX,g=rX,o=rX 
+    recurse: yes

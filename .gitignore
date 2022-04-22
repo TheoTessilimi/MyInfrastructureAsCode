@@ -6,3 +6,4 @@ terraform.tfstate.backup
 key
 .vscode
 terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/3.75.1/windows_amd64/terraform-provider-aws_v3.75.1_x5.exe
+ansible/roles/symfony/tasks/.env.local

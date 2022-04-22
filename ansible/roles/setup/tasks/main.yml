@@ -1,0 +1,38 @@
+---
+- name: Update and upgrade apt packages
+  become: true
+  apt:
+    upgrade: yes
+    update_cache: yes
+
+- name: Add dependencies
+  apt:
+    name: ['lsb-release', 'ca-certificates', 'apt-transport-https', 'software-properties-common']
+    state: latest
+
+- name: add php repo
+
+  apt_repository:
+    repo: 'ppa:ondrej/php'
+
+- name: Install PHP
+  apt: 
+    name: ['php8.1', 'php8.1-cli', 'php8.1-pgsql', 'php8.1-xml', 'php8.1-curl', 'php8.1-zip', 'zip', 'unzip', 'php8.1-fpm', 'php8.1-intl']
+
+- name: Install Composer
+  script: ./scripts/install_composer.sh
+
+
+
+- name: Install nodejs
+  apt:
+    name: nodejs
+    state: latest
+
+- name: Install npm
+  apt:
+    name: npm
+    state: latest
+
+
+

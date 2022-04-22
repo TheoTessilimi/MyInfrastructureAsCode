@@ -1,0 +1,23 @@
+---
+- name: add .env.local file
+  copy:
+    src: ".env.local"
+    dest: "/var/www/.env.local"
+
+- name: Composer Install
+  become: false
+  shell: export APP_ENV=prod && composer install --no-dev --optimize-autoloader
+  args:
+    chdir: /var/www/
+
+- name: Npm Install
+  shell: npm install
+  args:
+    chdir: /var/www/
+
+- name: npm run build
+  shell: npm run build
+  args:
+    chdir: /var/www/
+
+

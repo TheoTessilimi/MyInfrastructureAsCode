@@ -4,4 +4,7 @@
   become: true
 
   roles:
+  - setup
+  - git
+  - symfony
   - nginx
