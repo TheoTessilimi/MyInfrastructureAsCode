@@ -98,6 +98,8 @@ resource "aws_instance" "AnsibleControlPlane" {
                     sudo add-apt-repository --yes --update ppa:ansible/ansible-2.9 -y
                     sudo apt install ansible=2.9.6+dfsg-1 -y        
                     EOF
+  
+
 }
 
 
@@ -117,5 +119,28 @@ resource "aws_instance" "private" {
     Name = var.website_instance_name
   }
 
+}
+resource "null_resource" "playbook" {
+  provisioner "remote-exec" {
+    inline = [
+      "chmod 400 /home/ubuntu/${var.key_name}.pem",
+      "export ANSIBLE_HOST_KEY_CHECKING=false",
+      "ansible-playbook  -i ${aws_instance.private.private_ip}, --private-key /home/ubuntu/${var.key_name}.pem /home/ubuntu/ansible/nginx.yaml"]
+
+    connection {
+      type                = "ssh"
+      user                = "ubuntu"
+      host                = aws_instance.AnsibleControlPlane.private_ip
+      private_key         = file(var.key_path)
+      bastion_user        = "ubuntu"
+      bastion_host        = aws_instance.web.public_ip
+      bastion_private_key = file(var.key_path)
+    }
+  }
+  depends_on = [
+    aws_instance.AnsibleControlPlane,
+    aws_instance.private,
+    aws_instance.web
+  ]
 }
 

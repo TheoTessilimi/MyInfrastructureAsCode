@@ -7,3 +7,5 @@ key
 .vscode
 terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/3.75.1/windows_amd64/terraform-provider-aws_v3.75.1_x5.exe
 ansible/roles/symfony/tasks/.env.local
+terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/3.75.1/linux_amd64/terraform-provider-aws_v3.75.1_x5
+terraform/.terraform/providers/registry.terraform.io/hashicorp/null/3.1.1/linux_amd64/terraform-provider-null_v3.1.1_x5
